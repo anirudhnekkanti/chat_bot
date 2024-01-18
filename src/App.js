@@ -21,34 +21,31 @@ const ChatbotComponent = () => {
     }
 
     setLoading(true);
-
     try {
-      // Simulate sending the user message and receiving a bot response
-      const botResponse = await simulateBotResponse(message);
+      const response = await fetch('http://localhost:5000/api/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ message }),
+      });
+
+      const result = await response.json();
+
+      // Check if the response contains an image URL
+      const isImage = result.message.includes('.png');
 
       // Update the chat with the user's message and bot's response
       setMessages((prevMessages) => [
         ...prevMessages,
         { id: Date.now(), text: message, sender: 'user' },
-        { id: Date.now() + 1, text: botResponse, sender: 'bot' },
+        { id: Date.now() + 1, text: result.message, sender: 'bot', isImage },
       ]);
     } catch (error) {
       console.error('Error:', error);
     } finally {
       setLoading(false);
       setMessage('');
-    }
-  };
-
-  const simulateBotResponse = async (userMessage) => {
-    // Add your logic here to generate a response based on user input
-    // Replace this with the desired behavior of your chatbot
-    if (userMessage.toLowerCase() === 'hello') {
-      return "Hello! How can I help you?";
-    } else if (userMessage.toLowerCase() === 'bye') {
-      return "Goodbye! Have a great day!";
-    } else {
-      return "I'm sorry, I didn't understand that.";
     }
   };
 
@@ -63,7 +60,11 @@ const ChatbotComponent = () => {
       <div className="message-container">
         {messages.map((msg) => (
           <div key={msg.id} className={`chat-bubble ${msg.sender}-bubble`}>
-            <p>{msg.text}</p>
+            {msg.isImage ? (
+              <img src={msg.text} alt="Chart" />
+            ) : (
+              <p>{msg.text}</p>
+            )}
           </div>
         ))}
       </div>
